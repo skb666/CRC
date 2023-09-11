@@ -122,6 +122,17 @@ class CRC_CALC(object):
         self.__table = None
         self.__reflected_table = None
 
+    def __repr__(self):
+        if self.__input_reflected and self.__result_reflected:
+            if self.__reflected_table is None:
+                self.__reflected_table = self.__calculate_crc_table_reflected()
+            table = self.__reflected_table
+        else:
+            if self.__table is None:
+                self.__table = self.__calculate_crc_table()
+            table = self.__table
+        return ', '.join(["0x" + ("%02x" % i).upper() for i in table])
+
     def reset(self):
         self.__accumulate = self.__initial_value
 
