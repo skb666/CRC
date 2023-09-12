@@ -14,7 +14,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import array
+import os
+import shutil
+from crc_calc import CRC_CALC
 
 
 """Known CRC algorihtms table
@@ -87,268 +89,70 @@ crc_alg_table = {
 }
 
 
-class CRC_CALC(object):
-    """Generic CRC model implemented with lookup tables.
-    The model parameter can are the constructor parameters.
-    Args:
-        width (int): Number of bits of the polynomial
-        polynomial (int): CRC polynomial
-        initial_value (int): Initial value of the checksum
-        final_xor_value (int): Value that will be XOR-ed with final checksum
-        input_reflected (bool): True, if each input byte should be reflected
-        result_reflected (bool): True, if the result should be reflected before the final XOR is applied
-    """
-
-    def __init__(self, width, polynomial, initial_value, final_xor_value,
-                 input_reflected, result_reflected):
-        self.__width = width
-        self.__polynomial = polynomial
-        self.__initial_value = initial_value
-        self.__final_xor_value = final_xor_value
-        self.__input_reflected = input_reflected
-        self.__result_reflected = result_reflected
-        self.__accumulate = initial_value
-
-        # Initialize casting mask to keep the correct width for dynamic Python
-        # integers
-        self.__cast_mask = int('1' * self.__width, base=2)
-
-        # Mask that can be applied to get the Most Significant Bit (MSB) if the
-        # number with given width
-        self.__msb_mask = 0x01 << (self.__width - 1)
-
-        # The lookup tables get initialized lazzily. This ensures that only
-        # tables are calculated that are actually needed.
-        self.__table = None
-        self.__reflected_table = None
-
-    def __reflect(self, num, width):
-        """Reverts bit order of the given number
-        Args:
-            num (int): Number that should be reflected
-            width (int): Size of the number in bits
-        """
-        reflected = 0
-
-        for i in range(width):
-            if (num >> i) & 1 != 0:
-                reflected |= 1 << (width - 1 - i)
-
-        return reflected
-
-    def __make_table(self, width):
-        """Create static sized CRC lookup table and initialize it with ``0``.
-        For 8, 16, 32, and 64 bit width :class:`array.array` instances are used. For
-        all other widths it falls back to a generic Python :class:`list`.
-        Args:
-            width (int): Size of elements in bits
-        """
-        initializer = (0 for _ in range(256))
-
-        if width == 8:
-            return array.array('B', initializer)
-        elif width == 16:
-            return array.array('H', initializer)
-        elif width == 32:
-            return array.array('L', initializer)
-        elif width == 64:
-            return array.array('Q', initializer)
-        else:
-            # Fallback to a generic list
-            return list(initializer)
-
-    def __calculate_crc_table(self):
-        table = self.__make_table(self.__width)
-
-        for divident in range(256):
-            cur_byte = (divident << (self.__width - 8)) & self.__cast_mask
-
-            for bit in range(8):
-                if (cur_byte & self.__msb_mask) != 0:
-                    cur_byte <<= 1
-                    cur_byte ^= self.__polynomial
-                else:
-                    cur_byte <<= 1
-
-            table[divident] = cur_byte & self.__cast_mask
-
-        return table
-
-    def __calculate_crc_table_reflected(self):
-        table = self.__make_table(self.__width)
-
-        for divident in range(256):
-            reflected_divident = self.__reflect(divident, 8)
-            cur_byte = (reflected_divident << (
-                self.__width - 8)) & self.__cast_mask
-
-            for bit in range(8):
-                if (cur_byte & self.__msb_mask) != 0:
-                    cur_byte <<= 1
-                    cur_byte ^= self.__polynomial
-                else:
-                    cur_byte <<= 1
-
-            cur_byte = self.__reflect(cur_byte, self.__width)
-
-            table[divident] = (cur_byte & self.__cast_mask)
-
-        return table
-
-    def __repr__(self):
-        if self.__input_reflected and self.__result_reflected:
-            if self.__reflected_table is None:
-                self.__reflected_table = self.__calculate_crc_table_reflected()
-            table = self.__reflected_table
-        else:
-            if self.__table is None:
-                self.__table = self.__calculate_crc_table()
-            table = self.__table
-
-        table = [table[i:i+8] for i in range(0, len(table), 8)]
-        table_str = [', '.join(
-            ["0x{:0{}x}".format(i, self.__width // 4) for i in t]
-        ) for t in table]
-        return ',\n'.join(table_str)
-
-    def __fast_reflected(self, value):
-        """If the input data and the result checksum are both reflected in the
-        current model, an optimized algorithm can be used that reflects the
-        looup table rather then the input data. This saves the reflection
-        operation of the input data.
-        """
-        if not self.__input_reflected or not self.__result_reflected:
-            raise ValueError("Input and result must be reflected")
-
-        # Lazy initialization of the lookup table
-        if self.__reflected_table is None:
-            self.__reflected_table = self.__calculate_crc_table_reflected()
-
-        crc = self.__initial_value
-
-        for cur_byte in value:
-            # The LSB of the XOR-red remainder and the next byte is the index
-            # into the lookup table
-            index = (crc & 0xff) ^ cur_byte
-
-            # Shift out the index
-            crc = (crc >> 8) & self.__cast_mask
-
-            # XOR-ing remainder from the loopup table
-            crc = crc ^ self.__reflected_table[index]
-
-        # Final XBOR
-        return crc ^ self.__final_xor_value
-
-    def __call__(self, value):
-        """Compute the CRC checksum with respect to the model parameters by using
-        a looup table algorithm.
-        Args:
-            value (bytes): Input bytes that should be checked
-        Returns:
-            int - CRC checksum
-        """
-        # Use the reflection optimization if applicable
-        if self.__input_reflected and self.__result_reflected:
-            return self.__fast_reflected(value)
-
-        # Lazy initialization of the lookup table
-        if self.__table is None:
-            self.__table = self.__calculate_crc_table()
-
-        crc = self.__initial_value
-
-        for cur_byte in value:
-            if self.__input_reflected:
-                cur_byte = self.__reflect(cur_byte, 8)
-
-            # Update the MSB of the CRC value with the next input byte
-            crc = (crc ^ (cur_byte << (self.__width - 8))) & self.__cast_mask
-
-            # This MSB byte value is the index into the lookup table
-            index = (crc >> (self.__width - 8)) & 0xff
-
-            # Shift out the index
-            crc = (crc << 8) & self.__cast_mask
-
-            # XOR-ing crc from the lookup table using the calculated index
-            crc = crc ^ self.__table[index]
-
-        if self.__result_reflected:
-            crc = self.__reflect(crc, self.__width)
-
-        # Final XBOR
-        return crc ^ self.__final_xor_value
-
-    def __fast_reflected_acc(self, value):
-        if not self.__input_reflected or not self.__result_reflected:
-            raise ValueError("Input and result must be reflected")
-
-        # Lazy initialization of the lookup table
-        if self.__reflected_table is None:
-            self.__reflected_table = self.__calculate_crc_table_reflected()
-
-        for cur_byte in value:
-            # The LSB of the XOR-red remainder and the next byte is the index
-            # into the lookup table
-            index = (self.__accumulate & 0xff) ^ cur_byte
-
-            # Shift out the index
-            self.__accumulate = (self.__accumulate >> 8) & self.__cast_mask
-
-            # XOR-ing remainder from the loopup table
-            self.__accumulate = self.__accumulate ^ self.__reflected_table[index]
-
-        # Final XBOR
-        return self.__accumulate ^ self.__final_xor_value
-
-    def accumulate(self, value):
-        # Use the reflection optimization if applicable
-        if self.__input_reflected and self.__result_reflected:
-            return self.__fast_reflected_acc(value)
-
-        # Lazy initialization of the lookup table
-        if self.__table is None:
-            self.__table = self.__calculate_crc_table()
-
-        for cur_byte in value:
-            if self.__input_reflected:
-                cur_byte = self.__reflect(cur_byte, 8)
-
-            # Update the MSB of the CRC value with the next input byte
-            self.__accumulate = (self.__accumulate ^ (
-                cur_byte << (self.__width - 8))) & self.__cast_mask
-
-            # This MSB byte value is the index into the lookup table
-            index = (self.__accumulate >> (self.__width - 8)) & 0xff
-
-            # Shift out the index
-            self.__accumulate = (self.__accumulate << 8) & self.__cast_mask
-
-            # XOR-ing crc from the lookup table using the calculated index
-            self.__accumulate = self.__accumulate ^ self.__table[index]
-
-        if self.__result_reflected:
-            self.__accumulate = self.__reflect(self.__accumulate, self.__width)
-
-        # Final XBOR
-        return self.__accumulate ^ self.__final_xor_value
-
-    def reset(self):
-        self.__accumulate = self.__initial_value
-
-    def get(self):
-        crc = self.__accumulate
-        self.reset()
-        return crc ^ self.__final_xor_value
-
-
 class CRC(CRC_CALC):
     def __init__(self, alg_name):
         if not alg_name in crc_alg_table.keys():
             raise ValueError("Unknown CRC algorihtm")
         else:
             super().__init__(*crc_alg_table[alg_name])
+            self._algorithm = alg_name
+
+    def __check_path(self, path):
+        if not os.path.exists(path):
+            os.makedirs(path, mode=0o755, exist_ok=True)
+
+    def generate_for_c(self, path="./output/c/"):
+        crc_table = str(self)
+        crc_default = """.width = {width},
+.input_reflected = {input_reflected:d},
+.result_reflected = {result_reflected:d},
+.polynomial = 0x{polynomial:0{display_width}X},
+.initial_value = 0x{initial_value:0{display_width}X},
+.final_xor_value = 0x{final_xor_value:0{display_width}X},
+.accumulate = 0x{initial_value:0{display_width}X},""".format(
+            display_width=self._width // 4,
+            width=self._width,
+            input_reflected=self._input_reflected,
+            result_reflected=self._result_reflected,
+            polynomial=self._polynomial,
+            initial_value=self._initial_value,
+            final_xor_value=self._final_xor_value,
+        )
+        crc_config = """#ifndef __CRC_CONFIG_H__
+#define __CRC_CONFIG_H__
+
+#include <inttypes.h>
+
+#define CRC_NUM_WIDTH "{display_width}"
+#define CRC_NUM_PRIx PRIx{width}
+#define CRC_NUM_PRIX PRIX{width}
+
+#define CRC_NUM_TYPE uint{width}_t
+#define CRC_DEFAULT_DATA "{algorithm}.default"
+#define CRC_TABLE_DATA "{algorithm}.table"
+
+#endif
+""".format(
+            display_width=self._width // 4,
+            width=self._width,
+            algorithm=self._algorithm,
+        )
+
+        script_path = os.path.realpath(__file__)
+        generate_path = os.path.dirname(script_path) + "/generate/c"
+        example_path = os.path.dirname(script_path) + "/example/c"
+        code_path = path + "crc/"
+        shutil.copytree(generate_path, code_path, dirs_exist_ok=True)
+        shutil.copytree(example_path, path, dirs_exist_ok=True)
+
+        with open(code_path + "{alg_name}.table".format(alg_name=self._algorithm), "w") as f_obj:
+            f_obj.write(crc_table)
+
+        with open(code_path + "{alg_name}.default".format(alg_name=self._algorithm), "w") as f_obj:
+            f_obj.write(crc_default)
+
+        with open(code_path + "crc_conf.h", "w") as f_obj:
+            f_obj.write(crc_config)
 
 
 if __name__ == '__main__':
@@ -374,3 +178,6 @@ if __name__ == '__main__':
     assert crc1 == crc2
     print(hex(val_a1), hex(val_a2), hex(val_a3), hex(crc1))
     print(hex(val_b1), hex(val_b2), hex(val_b3), hex(crc2))
+
+    # 生成 C 语言代码
+    crc32_mpeg2.generate_for_c()

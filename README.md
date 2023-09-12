@@ -3,10 +3,11 @@
 + 支持 CRC8、CRC16、CRC32、CRC64
 + 支持单次计算、分次计算
 + 支持自定义参数模型
++ 支持代码生成（C/C++）
 
 ## 使用方法
 
-**使用已知参数模型**
+### 已知参数模型
 
 ```python
 from crc import CRC
@@ -30,27 +31,45 @@ crc2 = crc32_mpeg2.get()
 print(hex(crc1), hex(crc2))
 ```
 
-**使用自定义参数模型**
+### 自定义参数模型
 
 ```python
-from crc import CRC_CALC
+from crc_calc import CRC_CALC
 
 data1 = b'hello '
 data2 = b'world'
 data3 = b'!!!'
 
-mycrc = CRC_CALC(32, 0x04c11db7, 0xffffffff, 0xffffffff, True, True)
+crc32 = CRC_CALC(32, 0x04c11db7, 0xffffffff, 0xffffffff, True, True)
 
 # 单次校验
 crc1 = mycrc(data1 + data2 + data3)
 
 # 分步校验
-val1 = mycrc.accumulate(data1)
-val2 = mycrc.accumulate(data2)
-val3 = mycrc.accumulate(data3)
-crc2 = mycrc.get()
+val1 = crc32.accumulate(data1)
+val2 = crc32.accumulate(data2)
+val3 = crc32.accumulate(data3)
+crc2 = crc32.get()
 
 print(hex(crc1), hex(crc2))
+```
+
+### 代码生成
+
+**生成 C/C++ 代码**
+
+```python
+from crc import CRC
+
+CRC("crc32_mpeg2").generate_for_c()
+```
+
+**编译测试工程**
+
+```bash
+cd output/c/
+cmake -S. -Bbuild
+cmake --build build --target all
 ```
 
 ## 已知的 CRC 参数模型
