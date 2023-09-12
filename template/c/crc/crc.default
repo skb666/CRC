@@ -1,0 +1,7 @@
+.width = {width},
+.input_reflected = {input_reflected:d},
+.result_reflected = {result_reflected:d},
+.polynomial = 0x{polynomial:0{display_width}X},
+.initial_value = 0x{initial_value:0{display_width}X},
+.final_xor_value = 0x{final_xor_value:0{display_width}X},
+.accumulate = 0x{initial_value:0{display_width}X},

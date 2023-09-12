@@ -35,7 +35,8 @@ add_compile_options(-Wall -fdata-sections -ffunction-sections)
 add_subdirectory(crc)
 
 # example
-add_executable(example example.c)
+file(GLOB EXAMPLE_SRCS "*.c")
+add_executable(example ${EXAMPLE_SRCS})
 target_link_libraries(example crc)
 
 # 编译后执行

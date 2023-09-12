@@ -102,57 +102,63 @@ class CRC(CRC_CALC):
             os.makedirs(path, mode=0o755, exist_ok=True)
 
     def generate_for_c(self, path="./output/c/"):
-        crc_table = str(self)
-        crc_default = """.width = {width},
-.input_reflected = {input_reflected:d},
-.result_reflected = {result_reflected:d},
-.polynomial = 0x{polynomial:0{display_width}X},
-.initial_value = 0x{initial_value:0{display_width}X},
-.final_xor_value = 0x{final_xor_value:0{display_width}X},
-.accumulate = 0x{initial_value:0{display_width}X},""".format(
-            display_width=self._width // 4,
-            width=self._width,
-            input_reflected=self._input_reflected,
-            result_reflected=self._result_reflected,
-            polynomial=self._polynomial,
-            initial_value=self._initial_value,
-            final_xor_value=self._final_xor_value,
-        )
-        crc_config = """#ifndef __CRC_CONFIG_H__
-#define __CRC_CONFIG_H__
-
-#include <inttypes.h>
-
-#define CRC_NUM_WIDTH "{display_width}"
-#define CRC_NUM_PRIx PRIx{width}
-#define CRC_NUM_PRIX PRIX{width}
-
-#define CRC_NUM_TYPE uint{width}_t
-#define CRC_DEFAULT_DATA "{algorithm}.default"
-#define CRC_TABLE_DATA "{algorithm}.table"
-
-#endif
-""".format(
-            display_width=self._width // 4,
-            width=self._width,
-            algorithm=self._algorithm,
-        )
-
         script_path = os.path.realpath(__file__)
-        generate_path = os.path.dirname(script_path) + "/generate/c"
-        example_path = os.path.dirname(script_path) + "/example/c"
-        code_path = path + "crc/"
-        shutil.copytree(generate_path, code_path, dirs_exist_ok=True)
-        shutil.copytree(example_path, path, dirs_exist_ok=True)
+        template_path = os.path.dirname(script_path) + "/template/c"
+        crc_path = path + "crc/"
 
-        with open(code_path + "{alg_name}.table".format(alg_name=self._algorithm), "w") as f_obj:
+        crc_table = str(self)
+
+        with open(template_path + "/crc/crc.default", "r") as f_obj:
+            crc_default = f_obj.read().format(
+                display_width=self._width // 4,
+                width=self._width,
+                input_reflected=self._input_reflected,
+                result_reflected=self._result_reflected,
+                polynomial=self._polynomial,
+                initial_value=self._initial_value,
+                final_xor_value=self._final_xor_value,
+            )
+
+        with open(template_path + "/crc/crc.h", "r") as f_obj:
+            crc_h = f_obj.read().format(
+                algorithm=self._algorithm,
+                algorithm_upper=self._algorithm.upper(),
+                display_width=self._width // 4,
+                width=self._width,
+            )
+
+        with open(template_path + "/crc/crc.c", "r") as f_obj:
+            crc_c = f_obj.read().format(
+                algorithm=self._algorithm,
+                algorithm_upper=self._algorithm.upper(),
+            )
+
+        with open(template_path + "/example.c", "r") as f_obj:
+            crc_example = f_obj.read().format(
+                algorithm=self._algorithm,
+                algorithm_upper=self._algorithm.upper(),
+            )
+
+        self.__check_path(crc_path)
+        shutil.copyfile(template_path + "/crc/CMakeLists.txt",
+                        crc_path + "CMakeLists.txt")
+        shutil.copyfile(template_path + "/CMakeLists.txt",
+                        path + "CMakeLists.txt")
+
+        with open(crc_path + "{alg_name}.table".format(alg_name=self._algorithm), "w") as f_obj:
             f_obj.write(crc_table)
 
-        with open(code_path + "{alg_name}.default".format(alg_name=self._algorithm), "w") as f_obj:
+        with open(crc_path + "{alg_name}.default".format(alg_name=self._algorithm), "w") as f_obj:
             f_obj.write(crc_default)
 
-        with open(code_path + "crc_conf.h", "w") as f_obj:
-            f_obj.write(crc_config)
+        with open(crc_path + "{alg_name}.h".format(alg_name=self._algorithm), "w") as f_obj:
+            f_obj.write(crc_h)
+
+        with open(crc_path + "{alg_name}.c".format(alg_name=self._algorithm), "w") as f_obj:
+            f_obj.write(crc_c)
+
+        with open(path + "example_{alg_name}.c".format(alg_name=self._algorithm), "w") as f_obj:
+            f_obj.write(crc_example)
 
 
 if __name__ == '__main__':
