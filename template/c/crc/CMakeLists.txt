@@ -1,4 +1,4 @@
-# crc
-file(GLOB_RECURSE CRC_SRCS "*.c")
-add_library(crc STATIC ${CRC_SRCS})
-target_include_directories(crc PUBLIC .)
+# {algorithm}
+file(GLOB {algorithm}_srcs "*.c")
+add_library({algorithm} STATIC ${{{algorithm}_srcs}})
+target_include_directories({algorithm} PUBLIC .)

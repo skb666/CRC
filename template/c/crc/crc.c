@@ -145,5 +145,5 @@ void {algorithm}_reset({algorithm_upper}_DATA *crc) {{
     crc_val = crc->accumulate;
     {algorithm}_reset(crc);
 
-    return crc_val;
+    return crc_val ^ crc->final_xor_value;
 }}

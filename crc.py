@@ -101,10 +101,10 @@ class CRC(CRC_CALC):
         if not os.path.exists(path):
             os.makedirs(path, mode=0o755, exist_ok=True)
 
-    def generate_for_c(self, path="./output/c/"):
+    def generate_for_c(self, path="./generate/c/"):
         script_path = os.path.realpath(__file__)
         template_path = os.path.dirname(script_path) + "/template/c"
-        crc_path = path + "crc/"
+        crc_path = path + "{alg_name}/crc/".format(alg_name=self._algorithm)
 
         crc_table = str(self)
 
@@ -133,15 +133,23 @@ class CRC(CRC_CALC):
                 algorithm_upper=self._algorithm.upper(),
             )
 
-        with open(template_path + "/example.c", "r") as f_obj:
-            crc_example = f_obj.read().format(
+        with open(template_path + "/crc/CMakeLists.txt", "r") as f_obj:
+            crc_cmake = f_obj.read().format(
+                algorithm=self._algorithm,
+            )
+
+        with open(template_path + "/test/test.c", "r") as f_obj:
+            crc_test = f_obj.read().format(
                 algorithm=self._algorithm,
                 algorithm_upper=self._algorithm.upper(),
             )
 
+        with open(template_path + "/test/CMakeLists.txt", "r") as f_obj:
+            crc_test_cmake = f_obj.read().format(
+                algorithm=self._algorithm,
+            )
+
         self.__check_path(crc_path)
-        shutil.copyfile(template_path + "/crc/CMakeLists.txt",
-                        crc_path + "CMakeLists.txt")
         shutil.copyfile(template_path + "/CMakeLists.txt",
                         path + "CMakeLists.txt")
 
@@ -157,8 +165,14 @@ class CRC(CRC_CALC):
         with open(crc_path + "{alg_name}.c".format(alg_name=self._algorithm), "w") as f_obj:
             f_obj.write(crc_c)
 
-        with open(path + "example_{alg_name}.c".format(alg_name=self._algorithm), "w") as f_obj:
-            f_obj.write(crc_example)
+        with open(crc_path + "CMakeLists.txt", "w") as f_obj:
+            f_obj.write(crc_cmake)
+
+        with open(path + "{alg_name}/test_{alg_name}.c".format(alg_name=self._algorithm), "w") as f_obj:
+            f_obj.write(crc_test)
+
+        with open(path + "{alg_name}/CMakeLists.txt".format(alg_name=self._algorithm), "w") as f_obj:
+            f_obj.write(crc_test_cmake)
 
 
 if __name__ == '__main__':
@@ -186,4 +200,5 @@ if __name__ == '__main__':
     print(hex(val_b1), hex(val_b2), hex(val_b3), hex(crc2))
 
     # 生成 C 语言代码
-    crc32_mpeg2.generate_for_c()
+    for alg in crc_alg_table.keys():
+        CRC(alg).generate_for_c()

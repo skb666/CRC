@@ -50,9 +50,9 @@ int main() {{
 
     if (crc1 == crc2) {{
         printf("\nTest {algorithm} succeeded!!!\n\n");
+        return 0;
     }} else {{
         printf("\nTest {algorithm} failed!!!\n\n");
+        return -1;
     }}
-
-    return 0;
 }}

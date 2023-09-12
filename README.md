@@ -67,9 +67,12 @@ CRC("crc32_mpeg2").generate_for_c()
 **编译测试工程**
 
 ```bash
-cd output/c/
+cd generate/c/
 cmake -S. -Bbuild
-cmake --build build --target all
+# 构建所有目标
+cmake --build build --target all -- -j${nproc}
+# 执行单元测试
+cmake --build build --target test
 ```
 
 ## 已知的 CRC 参数模型
