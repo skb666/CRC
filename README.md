@@ -22,7 +22,8 @@ data3 = b'!!!'
 # 单次校验
 crc1 = crc32_mpeg2(data1 + data2 + data3)
 
-# 分步校验
+# 分次校验
+crc32_mpeg2.reset()
 val1 = crc32_mpeg2.accumulate(data1)
 val2 = crc32_mpeg2.accumulate(data2)
 val3 = crc32_mpeg2.accumulate(data3)
@@ -45,7 +46,8 @@ crc32 = CRC_CALC(32, 0x04c11db7, 0xffffffff, 0xffffffff, True, True)
 # 单次校验
 crc1 = mycrc(data1 + data2 + data3)
 
-# 分步校验
+# 分次校验
+crc32_mpeg2.reset()
 val1 = crc32.accumulate(data1)
 val2 = crc32.accumulate(data2)
 val3 = crc32.accumulate(data3)
@@ -73,6 +75,30 @@ cmake -S. -Bbuild
 cmake --build build --target all -- -j${nproc}
 # 执行单元测试
 cmake --build build --target test
+```
+
+**接口举例**
+
+crc32_mpeg 对外接口如下，不同的参数模型只需替换 CRC32_MPEG2、crc32_mpeg 即可
+
+```c
+// 创建 crc 变量
+CRC32_MPEG2 crc;
+
+// 初始化 crc
+void CRC(crc32_mpeg, init)(CRC32_MPEG2 *crc);
+
+// 重置分次校验值
+void CRC(crc32_mpeg, reset)(CRC32_MPEG2 *crc);
+
+// 分次校验
+CRC32_MPEG2_NUM_TYPE CRC(crc32_mpeg, accum)(CRC32_MPEG2 *crc, void *data, size_t length);
+
+// 获取分次校验值
+CRC32_MPEG2_NUM_TYPE CRC(crc32_mpeg, get)(CRC32_MPEG2 *crc);
+
+// 单次校验
+CRC32_MPEG2_NUM_TYPE CRC(crc32_mpeg, calc)(CRC32_MPEG2 *crc, void *data, size_t length);
 ```
 
 ## 已知的 CRC 参数模型

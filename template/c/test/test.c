@@ -21,7 +21,7 @@
 #include "{algorithm}.h"
 
 int main() {{
-    {algorithm_upper}_DATA crc;
+    {algorithm_upper} crc;
     {algorithm_upper}_NUM_TYPE crc_val, crc1, crc2;
 
     char *data[] = {{
@@ -30,22 +30,22 @@ int main() {{
         "!!!",
     }};
 
-    {algorithm}_init(&crc);
+    CRC({algorithm}, init)(&crc);
 
     printf("\n{algorithm_upper} Test Start\n\n");
 
     for (int i = 0; i < sizeof(data) / sizeof(data[0]); ++i) {{
-        crc_val = {algorithm}_calc(&crc, data[i], strlen(data[i]));
+        crc_val = CRC({algorithm}, calc)(&crc, data[i], strlen(data[i]));
         printf("0x%0" {algorithm_upper}_NUM_WIDTH {algorithm_upper}_NUM_PRIx " ", crc_val);
     }}
-    crc1 = {algorithm}_calc(&crc, "hello world!!!", 14);
+    crc1 = CRC({algorithm}, calc)(&crc, "hello world!!!", 14);
     printf("0x%0" {algorithm_upper}_NUM_WIDTH {algorithm_upper}_NUM_PRIx "\n", crc1);
 
     for (int i = 0; i < sizeof(data) / sizeof(data[0]); ++i) {{
-        crc_val = {algorithm}_accum(&crc, data[i], strlen(data[i]));
+        crc_val = CRC({algorithm}, accum)(&crc, data[i], strlen(data[i]));
         printf("0x%0" {algorithm_upper}_NUM_WIDTH {algorithm_upper}_NUM_PRIx " ", crc_val);
     }}
-    crc2 = {algorithm}_get(&crc);
+    crc2 = CRC({algorithm}, get)(&crc);
     printf("0x%0" {algorithm_upper}_NUM_WIDTH {algorithm_upper}_NUM_PRIx "\n", crc2);
 
     if (crc1 == crc2) {{

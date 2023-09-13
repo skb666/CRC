@@ -269,7 +269,7 @@ class CRC_CALC(object):
 
     def get(self):
         crc = self.__accumulate
-        self.reset()
+        # self.reset()
         return crc ^ self._final_xor_value
 
 
@@ -287,7 +287,8 @@ if __name__ == '__main__':
     val_a3 = crc32(data3)
     crc1 = crc32(data1 + data2 + data3)
 
-    # 分步校验
+    # 分次校验
+    crc32.reset()
     val_b1 = crc32.accumulate(data1)
     val_b2 = crc32.accumulate(data2)
     val_b3 = crc32.accumulate(data3)

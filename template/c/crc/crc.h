@@ -24,6 +24,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifndef CRC
+#define CRC(ALG, OPT) ALG##_##OPT
+#endif
+
 #define {algorithm_upper}_NUM_WIDTH "{display_width}"
 #define {algorithm_upper}_NUM_PRIx PRIx{width}
 #define {algorithm_upper}_NUM_PRIX PRIX{width}
@@ -45,13 +49,13 @@ typedef struct {{
     {algorithm_upper}_NUM_TYPE initial_value;
     {algorithm_upper}_NUM_TYPE final_xor_value;
     {algorithm_upper}_NUM_TYPE accumulate;
-}} {algorithm_upper}_DATA;
+}} {algorithm_upper};
 
-void {algorithm}_init({algorithm_upper}_DATA *crc);
-{algorithm_upper}_NUM_TYPE {algorithm}_calc({algorithm_upper}_DATA *crc, void *data, size_t length);
-{algorithm_upper}_NUM_TYPE {algorithm}_accum({algorithm_upper}_DATA *crc, void *data, size_t length);
-void {algorithm}_reset({algorithm_upper}_DATA *crc);
-{algorithm_upper}_NUM_TYPE {algorithm}_get({algorithm_upper}_DATA *crc);
+void {algorithm}_init({algorithm_upper} *crc);
+{algorithm_upper}_NUM_TYPE {algorithm}_calc({algorithm_upper} *crc, void *data, size_t length);
+{algorithm_upper}_NUM_TYPE {algorithm}_accum({algorithm_upper} *crc, void *data, size_t length);
+void {algorithm}_reset({algorithm_upper} *crc);
+{algorithm_upper}_NUM_TYPE {algorithm}_get({algorithm_upper} *crc);
 
 #ifdef __cplusplus
 }}

@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
-const static {algorithm_upper}_DATA {algorithm}_default = {{
+const static {algorithm_upper} {algorithm}_default = {{
 #include {algorithm_upper}_DEFAULT_DATA
 }};
 
@@ -40,11 +40,11 @@ static {algorithm_upper}_NUM_TYPE {algorithm}_reverse_bits({algorithm_upper}_NUM
     return result;
 }}
 
-void {algorithm}_init({algorithm_upper}_DATA *crc) {{
-    memcpy(crc, &{algorithm}_default, sizeof({algorithm_upper}_DATA));
+void {algorithm}_init({algorithm_upper} *crc) {{
+    memcpy(crc, &{algorithm}_default, sizeof({algorithm_upper}));
 }}
 
-static {algorithm_upper}_NUM_TYPE {algorithm}_calc_reflect({algorithm_upper}_DATA *crc, void *data, size_t length) {{
+static {algorithm_upper}_NUM_TYPE {algorithm}_calc_reflect({algorithm_upper} *crc, void *data, size_t length) {{
     uint8_t *value, index;
     {algorithm_upper}_NUM_TYPE crc_val;
 
@@ -60,7 +60,7 @@ static {algorithm_upper}_NUM_TYPE {algorithm}_calc_reflect({algorithm_upper}_DAT
     return crc_val ^ crc->final_xor_value;
 }}
 
-{algorithm_upper}_NUM_TYPE {algorithm}_calc({algorithm_upper}_DATA *crc, void *data, size_t length) {{
+{algorithm_upper}_NUM_TYPE {algorithm}_calc({algorithm_upper} *crc, void *data, size_t length) {{
     uint8_t *value, index;
     {algorithm_upper}_NUM_TYPE crc_val, data_xor;
 
@@ -91,7 +91,7 @@ static {algorithm_upper}_NUM_TYPE {algorithm}_calc_reflect({algorithm_upper}_DAT
     return crc_val ^ crc->final_xor_value;
 }}
 
-static {algorithm_upper}_NUM_TYPE {algorithm}_accum_reflect({algorithm_upper}_DATA *crc, void *data, size_t length) {{
+static {algorithm_upper}_NUM_TYPE {algorithm}_accum_reflect({algorithm_upper} *crc, void *data, size_t length) {{
     uint8_t *value, index;
 
     value = (uint8_t *)data;
@@ -105,7 +105,7 @@ static {algorithm_upper}_NUM_TYPE {algorithm}_accum_reflect({algorithm_upper}_DA
     return crc->accumulate ^ crc->final_xor_value;
 }}
 
-{algorithm_upper}_NUM_TYPE {algorithm}_accum({algorithm_upper}_DATA *crc, void *data, size_t length) {{
+{algorithm_upper}_NUM_TYPE {algorithm}_accum({algorithm_upper} *crc, void *data, size_t length) {{
     uint8_t *value, index;
     {algorithm_upper}_NUM_TYPE data_xor;
 
@@ -135,15 +135,15 @@ static {algorithm_upper}_NUM_TYPE {algorithm}_accum_reflect({algorithm_upper}_DA
     return crc->accumulate ^ crc->final_xor_value;
 }}
 
-void {algorithm}_reset({algorithm_upper}_DATA *crc) {{
+void {algorithm}_reset({algorithm_upper} *crc) {{
     crc->accumulate = crc->initial_value;
 }}
 
-{algorithm_upper}_NUM_TYPE {algorithm}_get({algorithm_upper}_DATA *crc) {{
+{algorithm_upper}_NUM_TYPE {algorithm}_get({algorithm_upper} *crc) {{
     {algorithm_upper}_NUM_TYPE crc_val;
 
     crc_val = crc->accumulate;
-    {algorithm}_reset(crc);
+    // {algorithm}_reset(crc);
 
     return crc_val ^ crc->final_xor_value;
 }}
