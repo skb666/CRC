@@ -71,6 +71,10 @@ crc_alg_table = {
     "crc16_modbus": (16, 0x8005, 0xffff, 0x0000, True, True),
     "crc16_x25": (16, 0x1021, 0xffff, 0xffff, True, True),
     "crc16_xmodem": (16, 0x1021, 0x0000, 0x0000, False, False),
+    # CRC24
+    "crc24_openpgp": (24, 0x864cfb, 0xb704ce, 0x000000, False, False),
+    "crc24_flexray_a": (24, 0x5d6dcb, 0xfedcba, 0x000000, False, False),
+    "crc24_flexray_b": (24, 0x5d6dcb, 0xabcdef, 0x000000, False, False),
     # CRC32
     "crc32": (32, 0x04c11db7, 0xffffffff, 0xffffffff, True, True),
     "crc32_bzip2": (32, 0x04c11db7, 0xffffffff, 0xffffffff, False, False),
@@ -96,6 +100,16 @@ class CRC(CRC_CALC):
         else:
             super().__init__(*crc_alg_table[alg_name])
             self._algorithm = alg_name
+            if self._width <= 8:
+                self._data_width = 8
+            elif self._width <= 16:
+                self._data_width = 16
+            elif self._width <= 32:
+                self._data_width = 32
+            elif self._width <= 64:
+                self._data_width = 64
+            else:
+                raise ValueError("CRC parameter error")
 
     def __check_path(self, path):
         if not os.path.exists(path):
@@ -117,6 +131,7 @@ class CRC(CRC_CALC):
                 polynomial=self._polynomial,
                 initial_value=self._initial_value,
                 final_xor_value=self._final_xor_value,
+                cast_mask=self._cast_mask,
             )
 
         with open(template_path + "/crc/crc.h", "r") as f_obj:
@@ -124,6 +139,7 @@ class CRC(CRC_CALC):
                 algorithm=self._algorithm,
                 algorithm_upper=self._algorithm.upper(),
                 display_width=self._width // 4,
+                data_width=self._data_width,
                 width=self._width,
             )
 

@@ -2,6 +2,7 @@
  * @param algorithm: {algorithm}
  * @param algorithm_upper: {algorithm_upper}
  * @param display_width: {display_width}
+ * @param data_width: {data_width}
  * @param width: {width}
  * 
  * Copyright (c) 2023-present SKB(skb666@qq.com)
@@ -29,10 +30,10 @@
 #endif
 
 #define {algorithm_upper}_NUM_WIDTH "{display_width}"
-#define {algorithm_upper}_NUM_PRIx PRIx{width}
-#define {algorithm_upper}_NUM_PRIX PRIX{width}
+#define {algorithm_upper}_NUM_PRIx PRIx{data_width}
+#define {algorithm_upper}_NUM_PRIX PRIX{data_width}
 
-#define {algorithm_upper}_NUM_TYPE uint{width}_t
+#define {algorithm_upper}_NUM_TYPE uint{data_width}_t
 #define {algorithm_upper}_DEFAULT_DATA "{algorithm}.default"
 #define {algorithm_upper}_TABLE_DATA "{algorithm}.table"
 
@@ -49,6 +50,7 @@ typedef struct {{
     {algorithm_upper}_NUM_TYPE initial_value;
     {algorithm_upper}_NUM_TYPE final_xor_value;
     {algorithm_upper}_NUM_TYPE accumulate;
+    {algorithm_upper}_NUM_TYPE cast_mask;
 }} {algorithm_upper};
 
 void {algorithm}_init({algorithm_upper} *crc);

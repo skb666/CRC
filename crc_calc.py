@@ -29,8 +29,10 @@ class CRC_CALC(object):
         result_reflected (bool): True, if the result should be reflected before the final XOR is applied
     """
 
-    def __init__(self, width, polynomial, initial_value, final_xor_value,
-                 input_reflected, result_reflected):
+    def __init__(self, width, polynomial, initial_value, final_xor_value, input_reflected, result_reflected):
+        assert 8 <= width <= 64
+        assert width % 8 == 0
+
         self._width = width
         self._polynomial = polynomial
         self._initial_value = initial_value
@@ -41,11 +43,11 @@ class CRC_CALC(object):
 
         # Initialize casting mask to keep the correct width for dynamic Python
         # integers
-        self.__cast_mask = int('1' * self._width, base=2)
+        self._cast_mask = int('1' * self._width, base=2)
 
         # Mask that can be applied to get the Most Significant Bit (MSB) if the
         # number with given width
-        self.__msb_mask = 0x01 << (self._width - 1)
+        self._msb_mask = 0x01 << (self._width - 1)
 
         # The lookup tables get initialized lazzily. This ensures that only
         # tables are calculated that are actually needed.
@@ -75,13 +77,13 @@ class CRC_CALC(object):
         """
         initializer = (0 for _ in range(256))
 
-        if width == 8:
+        if width <= 8:
             return array.array('B', initializer)
-        elif width == 16:
+        elif width <= 16:
             return array.array('H', initializer)
-        elif width == 32:
+        elif width <= 32:
             return array.array('L', initializer)
-        elif width == 64:
+        elif width <= 64:
             return array.array('Q', initializer)
         else:
             # Fallback to a generic list
@@ -91,16 +93,16 @@ class CRC_CALC(object):
         table = self.__make_table(self._width)
 
         for divident in range(256):
-            cur_byte = (divident << (self._width - 8)) & self.__cast_mask
+            cur_byte = (divident << (self._width - 8)) & self._cast_mask
 
             for bit in range(8):
-                if (cur_byte & self.__msb_mask) != 0:
+                if (cur_byte & self._msb_mask) != 0:
                     cur_byte <<= 1
                     cur_byte ^= self._polynomial
                 else:
                     cur_byte <<= 1
 
-            table[divident] = cur_byte & self.__cast_mask
+            table[divident] = cur_byte & self._cast_mask
 
         return table
 
@@ -110,10 +112,10 @@ class CRC_CALC(object):
         for divident in range(256):
             reflected_divident = self.__reflect(divident, 8)
             cur_byte = (reflected_divident << (
-                self._width - 8)) & self.__cast_mask
+                self._width - 8)) & self._cast_mask
 
             for bit in range(8):
-                if (cur_byte & self.__msb_mask) != 0:
+                if (cur_byte & self._msb_mask) != 0:
                     cur_byte <<= 1
                     cur_byte ^= self._polynomial
                 else:
@@ -121,7 +123,7 @@ class CRC_CALC(object):
 
             cur_byte = self.__reflect(cur_byte, self._width)
 
-            table[divident] = (cur_byte & self.__cast_mask)
+            table[divident] = (cur_byte & self._cast_mask)
 
         return table
 
@@ -162,7 +164,7 @@ class CRC_CALC(object):
             index = (crc & 0xff) ^ cur_byte
 
             # Shift out the index
-            crc = (crc >> 8) & self.__cast_mask
+            crc = (crc >> 8) & self._cast_mask
 
             # XOR-ing remainder from the loopup table
             crc = crc ^ self.__reflected_table[index]
@@ -193,13 +195,13 @@ class CRC_CALC(object):
                 cur_byte = self.__reflect(cur_byte, 8)
 
             # Update the MSB of the CRC value with the next input byte
-            crc = (crc ^ (cur_byte << (self._width - 8))) & self.__cast_mask
+            crc = (crc ^ (cur_byte << (self._width - 8))) & self._cast_mask
 
             # This MSB byte value is the index into the lookup table
             index = (crc >> (self._width - 8)) & 0xff
 
             # Shift out the index
-            crc = (crc << 8) & self.__cast_mask
+            crc = (crc << 8) & self._cast_mask
 
             # XOR-ing crc from the lookup table using the calculated index
             crc = crc ^ self.__table[index]
@@ -224,7 +226,7 @@ class CRC_CALC(object):
             index = (self.__accumulate & 0xff) ^ cur_byte
 
             # Shift out the index
-            self.__accumulate = (self.__accumulate >> 8) & self.__cast_mask
+            self.__accumulate = (self.__accumulate >> 8) & self._cast_mask
 
             # XOR-ing remainder from the loopup table
             self.__accumulate = self.__accumulate ^ self.__reflected_table[index]
@@ -247,13 +249,13 @@ class CRC_CALC(object):
 
             # Update the MSB of the CRC value with the next input byte
             self.__accumulate = (self.__accumulate ^ (
-                cur_byte << (self._width - 8))) & self.__cast_mask
+                cur_byte << (self._width - 8))) & self._cast_mask
 
             # This MSB byte value is the index into the lookup table
             index = (self.__accumulate >> (self._width - 8)) & 0xff
 
             # Shift out the index
-            self.__accumulate = (self.__accumulate << 8) & self.__cast_mask
+            self.__accumulate = (self.__accumulate << 8) & self._cast_mask
 
             # XOR-ing crc from the lookup table using the calculated index
             self.__accumulate = self.__accumulate ^ self.__table[index]

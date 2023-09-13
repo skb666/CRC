@@ -53,7 +53,7 @@ static {algorithm_upper}_NUM_TYPE {algorithm}_calc_reflect({algorithm_upper} *cr
 
     for (size_t i = 0; i < length; ++value, ++i) {{
         index = (crc_val & 0xFF) ^ (*value);
-        crc_val >>= 8;
+        crc_val = (crc_val >> 8) & crc->cast_mask;
         crc_val ^= {algorithm}_table[index];
     }}
 
@@ -78,9 +78,9 @@ static {algorithm_upper}_NUM_TYPE {algorithm}_calc_reflect({algorithm_upper} *cr
             data_xor = *value;
         }}
 
-        crc_val ^= data_xor << (crc->width - 8);
+        crc_val = (crc_val ^ (data_xor << (crc->width - 8))) & crc->cast_mask;
         index = (uint8_t)((crc_val >> (crc->width - 8)) & 0xFF);
-        crc_val <<= 8;
+        crc_val = (crc_val << 8) & crc->cast_mask;
         crc_val ^= {algorithm}_table[index];
     }}
 
@@ -98,7 +98,7 @@ static {algorithm_upper}_NUM_TYPE {algorithm}_accum_reflect({algorithm_upper} *c
 
     for (size_t i = 0; i < length; ++value, ++i) {{
         index = (crc->accumulate & 0xFF) ^ (*value);
-        crc->accumulate >>= 8;
+        crc->accumulate = (crc->accumulate >> 8) & crc->cast_mask;
         crc->accumulate ^= {algorithm}_table[index];
     }}
 
@@ -122,9 +122,9 @@ static {algorithm_upper}_NUM_TYPE {algorithm}_accum_reflect({algorithm_upper} *c
             data_xor = *value;
         }}
 
-        crc->accumulate ^= data_xor << (crc->width - 8);
+        crc->accumulate = (crc->accumulate ^ (data_xor << (crc->width - 8))) & crc->cast_mask;
         index = (uint8_t)((crc->accumulate >> (crc->width - 8)) & 0xFF);
-        crc->accumulate <<= 8;
+        crc->accumulate = (crc->accumulate << 8) & crc->cast_mask;
         crc->accumulate ^= {algorithm}_table[index];
     }}
 

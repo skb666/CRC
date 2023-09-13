@@ -1,6 +1,6 @@
 # CRC
 
-+ 支持 CRC8、CRC16、CRC32、CRC64
++ 支持 CRC8、CRC16、CRC24、CRC32、CRC64
 + 支持单次计算、分次计算
 + 支持自定义参数模型
 + 支持代码生成（C/C++）
@@ -143,6 +143,9 @@ CRC32_MPEG2_NUM_TYPE CRC(crc32_mpeg, calc)(CRC32_MPEG2 *crc, void *data, size_t 
 | crc16_modbus        |  16   | 0x8005             | 0xFFFF             | 0x0000             |     True |     True |
 | crc16_x25           |  16   | 0x1021             | 0xFFFF             | 0xFFFF             |     True |     True |
 | crc16_xmodem        |  16   | 0x1021             | 0x0000             | 0x0000             |    False |    False |
+| crc24_openpgp       |  24   | 0x864cfb           | 0xb704ce           | 0x000000           |    False |    False |
+| crc24_flexray_a     |  24   | 0x5d6dcb           | 0xfedcba           | 0x000000           |    False |    False |
+| crc24_flexray_b     |  24   | 0x5d6dcb           | 0xabcdef           | 0x000000           |    False |    False |
 | crc32               |  32   | 0x04C11DB7         | 0xFFFFFFFF         | 0xFFFFFFFF         |     True |     True |
 | crc32_bzip2         |  32   | 0x04C11DB7         | 0xFFFFFFFF         | 0xFFFFFFFF         |    False |    False |
 | crc32_c             |  32   | 0x1EDC6F41         | 0xFFFFFFFF         | 0xFFFFFFFF         |     True |     True |
@@ -161,3 +164,4 @@ CRC32_MPEG2_NUM_TYPE CRC(crc32_mpeg, calc)(CRC32_MPEG2 *crc, void *data, size_t 
 
 1. [CRC（循环冗余校验）在线计算](http://www.ip33.com/crc.html)
 2. [CRC Calculator (Javascript)](http://www.sunshine2k.de/coding/javascript/crc/crc_js.html)
+3. [16进制(CRC24)(多项式异或,多种)校验](https://www.23bei.com/tool/825.html)
