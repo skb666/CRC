@@ -118,7 +118,7 @@ class CRC(CRC_CALC):
     def generate_for_c(self, path="./generate/c/"):
         script_path = os.path.realpath(__file__)
         template_path = os.path.dirname(script_path) + "/template/c"
-        crc_path = path + "{alg_name}/crc/".format(alg_name=self._algorithm)
+        crc_path = path + "libcrc/{alg_name}/crc/".format(alg_name=self._algorithm)
 
         crc_table = str(self)
 
@@ -168,6 +168,10 @@ class CRC(CRC_CALC):
         self.__check_path(crc_path)
         shutil.copyfile(template_path + "/CMakeLists.txt",
                         path + "CMakeLists.txt")
+        shutil.copyfile(template_path + "/toolchain.cmake",
+                        path + "toolchain.cmake")
+        shutil.copyfile(template_path + "/libcrc.cmake",
+                        path + "libcrc/libcrc.cmake")
 
         with open(crc_path + "{alg_name}.table".format(alg_name=self._algorithm), "w") as f_obj:
             f_obj.write(crc_table)
@@ -184,10 +188,10 @@ class CRC(CRC_CALC):
         with open(crc_path + "CMakeLists.txt", "w") as f_obj:
             f_obj.write(crc_cmake)
 
-        with open(path + "{alg_name}/test_{alg_name}.c".format(alg_name=self._algorithm), "w") as f_obj:
+        with open(path + "libcrc/{alg_name}/test_{alg_name}.c".format(alg_name=self._algorithm), "w") as f_obj:
             f_obj.write(crc_test)
 
-        with open(path + "{alg_name}/CMakeLists.txt".format(alg_name=self._algorithm), "w") as f_obj:
+        with open(path + "libcrc/{alg_name}/CMakeLists.txt".format(alg_name=self._algorithm), "w") as f_obj:
             f_obj.write(crc_test_cmake)
 
 
